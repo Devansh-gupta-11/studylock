@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StudyLock</title>
+    <script type="module" crossorigin src="/assets/index-Cx8U_mbK.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BExCsNcp.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      window.addEventListener('load', () => {
+        let youtubeFeatureAdded = false;
+        const observer = new MutationObserver(() => {
+          // Look for the intent tag text "Intent: [name]"
+          const allSpans = Array.from(document.querySelectorAll('*'));
+          const intentElem = allSpans.find(el => el.textContent && el.textContent.startsWith('Intent: ') && el.children.length === 0);
+          
+          // Look for the search bar
+          const searchInput = document.querySelector('input[placeholder*="Search strictly related to"]');
+          
+          if (!youtubeFeatureAdded && searchInput) {
+            // Extract intent directly from the search placeholder
+            const intent = searchInput.placeholder.replace('Search strictly related to:', '').replace('Search strictly related to', '').replace(':', '').trim();
+            const container = searchInput.parentElement.parentElement;
+            
+            if (container) {
+              // Ensure we don't duplicate
+              if (document.getElementById('yt-inject-btn')) return;
+
+              const ytContainer = document.createElement('div');
+              ytContainer.style.cssText = 'margin-top: 20px; text-align: center;';
+              
+              const ytBtn = document.createElement('button');
+              ytBtn.id = 'yt-inject-btn';
+              ytBtn.innerHTML = '▶ Watch on YouTube';
+              ytBtn.style.cssText = 'background: #e52d27; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s background; display: inline-flex; align-items: center; gap: 8px; margin: 0 auto; box-shadow: 0 4px 10px rgba(229, 45, 39, 0.3);';
+              
+              ytBtn.onmouseenter = () => ytBtn.style.background = '#c21e1a';
+              ytBtn.onmouseleave = () => ytBtn.style.background = '#e52d27';
+              
+              ytBtn.onclick = async (e) => {
+                e.preventDefault();
+                const query = searchInput.value.trim() || intent;
+                
+                // Try to extract a exact YouTube Video ID from the query if they pasted a link
+                const ytMatch = query.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+                
+                if (ytMatch && ytMatch[1]) {
+                  const videoId = ytMatch[1];
+                  
+                  // Create immersive full-screen overlay inside the app
+                  const overlay = document.createElement('div');
+                  overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 2147483647; display: flex; flex-direction: column;';
+                  
+                  // Add a Close button
+                  const closeBtn = document.createElement('button');
+                  closeBtn.innerHTML = '✕ Close Video';
+                  closeBtn.style.cssText = 'position: absolute; top: 20px; right: 20px; background: rgba(229, 45, 39, 0.9); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-family: inherit; cursor: pointer; z-index: 2147483648; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.5); backdrop-filter: blur(5px);';
+                  closeBtn.onmouseenter = () => closeBtn.style.background = 'rgba(255, 60, 50, 1)';
+                  closeBtn.onmouseleave = () => closeBtn.style.background = 'rgba(229, 45, 39, 0.9)';
+                  closeBtn.onclick = () => {
+                    if (document.fullscreenElement) {
+                      document.exitFullscreen().catch(err => console.log(err));
+                    }
+                    if (document.body.contains(overlay)) {
+                      document.body.removeChild(overlay);
+                    }
+                  };
+                  
+                  // Embed the exact YouTube video in full screen
+                  const iframe = document.createElement('iframe');
+                  iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&fs=1';
+                  iframe.style.cssText = 'width: 100%; height: 100%; border: none; flex-grow: 1;';
+                  iframe.setAttribute('allowfullscreen', 'true');
+                  iframe.setAttribute('allow', 'autoplay; fullscreen');
+                  
+                  overlay.appendChild(iframe);
+                  overlay.appendChild(closeBtn);
+                  document.body.appendChild(overlay);
+                  
+                  // Force Native Browser Fullscreen
+                  try {
+                    if (overlay.requestFullscreen) {
+                      await overlay.requestFullscreen();
+                    } else if (overlay.webkitRequestFullscreen) {
+                      await overlay.webkitRequestFullscreen();
+                    } else if (overlay.msRequestFullscreen) {
+                      await overlay.msRequestFullscreen();
+                    }
+                  } catch (err) {
+                    console.error('Fullscreen failed', err);
+                  }
+                } else {
+                  // If it's just raw text, YouTube blocks iframe searching, so we redirect
+                  window.location.href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(query);
+                }
+              };
+              
+              ytContainer.appendChild(ytBtn);
+              
+              // Place it cleanly after the search input container
+              searchInput.parentElement.after(ytContainer);
+              youtubeFeatureAdded = true;
+            }
+          }
+          
+          // Reset if we leave the portal page
+          if (!searchInput) {
+            youtubeFeatureAdded = false;
+          }
+        });
+        
+        observer.observe(document.body, { childList: true, subtree: true });
+      });
+    </script>
+  </body>
+</html>
