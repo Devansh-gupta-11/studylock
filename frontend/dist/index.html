@@ -72,8 +72,16 @@
               const currentInput = document.querySelector('input[placeholder*="Search"]');
               if (!currentInput) return;
               
-              const query = currentInput.value.trim();
-              if (!query) return alert("Please enter a topic or link in the search bar first!");
+              let query = currentInput.value.trim();
+              if (!query) {
+                  // Fallback to the declared intent in the placeholder (e.g. "Search strictly related to: node js")
+                  const parts = currentInput.placeholder.split(': ');
+                  if (parts.length > 1 && parts[1]) {
+                      query = parts[1].trim();
+                  } else {
+                      return alert("Please enter a topic or link in the search bar first!");
+                  }
+              }
 
               const vidId = exactVideoId(query);
               
