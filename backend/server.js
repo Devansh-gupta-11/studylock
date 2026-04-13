@@ -28,11 +28,11 @@ app.get('/api/search-video', (req, res) => {
     const query = req.query.q;
     if (!query) return res.status(400).json({ error: 'Query required' });
     
-    https.get(`https://html.duckduckgo.com/html/?q=site:youtube.com+${encodeURIComponent(query)}`, (ddgRes) => {
+    https.get(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, (ytRes) => {
         let data = '';
-        ddgRes.on('data', chunk => data += chunk);
-        ddgRes.on('end', () => {
-            const match = data.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/i);
+        ytRes.on('data', chunk => data += chunk);
+        ytRes.on('end', () => {
+            const match = data.match(/"videoId":"([a-zA-Z0-9_-]{11})"/);
             if (match && match[1]) {
                 res.json({ videoId: match[1] });
             } else {
