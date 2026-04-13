@@ -95,20 +95,6 @@
         
         observer.observe(document.body, { childList: true, subtree: true });
         
-        // Also intercept clicks on the mock cards
-        document.addEventListener('click', (e) => {
-          // If they click any text containing "REACT" or dummy video cards
-          const isCard = e.target.closest('div[style*="background"], div[class*="card"]');
-          const isYtContainer = e.target.closest('#yt-inject-container');
-          const isSearch = e.target.closest('input');
-          const isHeader = e.target.closest('header, nav, button');
-          
-          if (isCard && !isYtContainer && !isSearch && !isHeader) {
-             e.preventDefault();
-             e.stopPropagation();
-             alert("🔐 These feature cards are disabled in strict focus mode.\nPlease paste your specific YouTube link into the search bar to study.");
-          }
-        }, true);
       });
     </script>
   </body>
