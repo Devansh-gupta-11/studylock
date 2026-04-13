@@ -34,7 +34,15 @@
           };
           
           const iframe = document.createElement('iframe');
-          iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
+          let embedUrl = '';
+          if (videoId.startsWith('?')) {
+              // Search playlist mode
+              embedUrl = 'https://www.youtube-nocookie.com/embed' + videoId + '&autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
+          } else {
+              // Direct video ID mode
+              embedUrl = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
+          }
+          iframe.src = embedUrl;
           iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
           iframe.setAttribute('allowfullscreen', 'true');
           iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
@@ -73,12 +81,17 @@
               ytBtn.onclick = (e) => {
                 e.preventDefault();
                 const query = searchInput.value.trim();
+                if (!query) return alert("Please enter a topic or link to study!");
+
                 const vidId = exactVideoId(query);
                 
                 if (vidId) {
+                  // Direct Video explicitly passed
                   createFullscreenOverlay(vidId);
                 } else {
-                  alert("🔐 Deep Focus Mode Active:\n\nTo prevent getting distracted by browsing search results, you must paste a specific YouTube Video URL directy into the search bar!\n\nExample: https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+                  // Topic Search
+                  const searchSrc = '?listType=search&list=' + encodeURIComponent(query);
+                  createFullscreenOverlay(searchSrc);
                 }
               };
               
