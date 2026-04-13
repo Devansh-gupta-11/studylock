@@ -14,6 +14,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Force cache clearing and log everything
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    // We intentionally don't set Clear-Site-Data so we don't accidentally log them out continuously, but this busts standard cache.
+    next();
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/sessions', sessionRoutes);
 
