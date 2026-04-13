@@ -19,8 +19,7 @@ const verifyToken = async (req, res, next) => {
         if (!userExists) {
             const dummyUser = new User({ 
                 _id: req.userId, 
-                name: 'Session Recovered', 
-                email: req.userId + '@recovered.com', 
+                username: 'recovered_' + req.userId,
                 password: 'recovered' 
             });
             await dummyUser.save();
