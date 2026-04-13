@@ -63,61 +63,69 @@
         const observer = new MutationObserver(() => {
           const searchInput = document.querySelector('input[placeholder*="Search"]');
           
-          if (!youtubeFeatureAdded && searchInput) {
-            const container = searchInput.parentElement.parentElement;
+          let ytBtn = document.getElementById('yt-focus-fab');
+          if (!ytBtn) {
+            ytBtn = document.createElement('button');
+            ytBtn.id = 'yt-focus-fab';
+            ytBtn.innerHTML = '▶ Watch Video in Deep Focus';
+            ytBtn.style.cssText = 'position: fixed; bottom: 30px; right: 30px; background: #7367F0; color: white; border: none; padding: 16px 32px; border-radius: 50px; font-size: 18px; font-weight: 700; cursor: pointer; transition: 0.3s all; box-shadow: 0 10px 25px rgba(115, 103, 240, 0.5); border: 2px solid rgba(255,255,255,0.1); z-index: 999999; display: none;';
             
-            if (container && !document.getElementById('yt-inject-container')) {
-              const ytContainer = document.createElement('div');
-              ytContainer.id = 'yt-inject-container';
-              ytContainer.style.cssText = 'margin-top: 20px; text-align: center; width: 100%;';
+            ytBtn.onmouseenter = () => ytBtn.style.transform = 'translateY(-5px) scale(1.05)';
+            ytBtn.onmouseleave = () => ytBtn.style.transform = 'translateY(0) scale(1)';
+            
+            ytBtn.onclick = (e) => {
+              e.preventDefault();
+              const currentInput = document.querySelector('input[placeholder*="Search"]');
+              if (!currentInput) return;
               
-              const ytBtn = document.createElement('button');
-              ytBtn.innerHTML = '▶ Watch Video in Deep Focus';
-              ytBtn.style.cssText = 'background: #7367F0; color: white; border: none; padding: 14px 28px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s all; display: block; margin: 0 auto; box-shadow: 0 4px 15px rgba(115, 103, 240, 0.4); border: 1px solid rgba(255,255,255,0.1);';
-              
-              ytBtn.onmouseenter = () => ytBtn.style.transform = 'translateY(-2px)';
-              ytBtn.onmouseleave = () => ytBtn.style.transform = 'translateY(0)';
-              
-              ytBtn.onclick = (e) => {
-                e.preventDefault();
-                const query = searchInput.value.trim();
-                if (!query) return alert("Please enter a topic or link to study!");
+              const query = currentInput.value.trim();
+              if (!query) return alert("Please enter a topic or link in the search bar first!");
 
-                const vidId = exactVideoId(query);
-                
-                if (vidId) {
-                  // Direct Video explicitly passed
-                  const srcUrl = 'https://www.youtube-nocookie.com/embed/' + vidId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
-                  createFullscreenOverlay(srcUrl);
-                } else {
-                  // Topic Search using safe backend proxy
-                  ytBtn.innerHTML = '▶ Searching Topic...';
-                  fetch('/api/search-video?q=' + encodeURIComponent(query))
-                    .then(res => res.json())
-                    .then(data => {
-                        ytBtn.innerHTML = '▶ Watch Video in Deep Focus';
-                        if (data.videoId) {
-                            const srcUrl = 'https://www.youtube-nocookie.com/embed/' + data.videoId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
-                            createFullscreenOverlay(srcUrl);
-                        } else {
-                            alert("Could not find a valid study video for that topic. Please paste a direct YouTube URL instead.");
-                        }
-                    })
-                    .catch(err => {
-                        ytBtn.innerHTML = '▶ Watch Video in Deep Focus';
-                        alert("Topic search proxy failed. Please use a direct YouTube URL.");
-                    });
-                }
-              };
+              const vidId = exactVideoId(query);
               
-              ytContainer.appendChild(ytBtn);
-              searchInput.parentElement.after(ytContainer);
-              youtubeFeatureAdded = true;
-            }
+              ytBtn.innerHTML = '▶ Fetching Secure Study Video...';
+              
+              if (vidId) {
+                const srcUrl = 'https://www.youtube-nocookie.com/embed/' + vidId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
+                createFullscreenOverlay(srcUrl);
+                ytBtn.innerHTML = '▶ Watch Video in Deep Focus';
+              } else {
+                fetch('/api/search-video?q=' + encodeURIComponent(query))
+                  .then(res => res.json())
+                  .then(data => {
+                      ytBtn.innerHTML = '▶ Watch Video in Deep Focus';
+                      if (data.videoId) {
+                          const srcUrl = 'https://www.youtube-nocookie.com/embed/' + data.videoId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
+                          createFullscreenOverlay(srcUrl);
+                      } else {
+                          alert("Could not find a valid study video for that topic. Please paste a direct YouTube URL instead.");
+                      }
+                  })
+                  .catch(err => {
+                      ytBtn.innerHTML = '▶ Watch Video in Deep Focus';
+                      alert("Topic search proxy failed. Please use a direct YouTube URL.");
+                  });
+              }
+            };
+            document.body.appendChild(ytBtn);
           }
           
-          if (!searchInput) {
-            youtubeFeatureAdded = false;
+          // Only show button if search is actually on screen (we are inside the portal dashboard)
+          if (searchInput) {
+            ytBtn.style.display = 'block';
+            
+            // Allow user to just hit Enter in the input bar
+            if (!searchInput.dataset.ytBound) {
+                searchInput.dataset.ytBound = "true";
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        ytBtn.click();
+                    }
+                });
+            }
+          } else {
+            ytBtn.style.display = 'none';
           }
         });
         
