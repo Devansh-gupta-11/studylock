@@ -35,12 +35,7 @@
           };
           
           const iframe = document.createElement('iframe');
-          let embedUrl = '';
-          if (videoId.startsWith('?')) {
-              embedUrl = 'https://www.youtube-nocookie.com/embed' + videoId + '&autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
-          } else {
-              embedUrl = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
-          }
+          const embedUrl = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
           iframe.src = embedUrl;
           iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
           iframe.setAttribute('allowfullscreen', 'true');
@@ -85,8 +80,7 @@
               ytBtn.innerHTML = '▶ Fetching Secure Study Video...';
               
               if (vidId) {
-                const srcUrl = 'https://www.youtube-nocookie.com/embed/' + vidId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
-                createFullscreenOverlay(srcUrl);
+                createFullscreenOverlay(vidId);
                 ytBtn.innerHTML = '▶ Watch Video in Deep Focus';
               } else {
                 fetch('/api/search-video?q=' + encodeURIComponent(query))
@@ -94,8 +88,7 @@
                   .then(data => {
                       ytBtn.innerHTML = '▶ Watch Video in Deep Focus';
                       if (data.videoId) {
-                          const srcUrl = 'https://www.youtube-nocookie.com/embed/' + data.videoId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
-                          createFullscreenOverlay(srcUrl);
+                          createFullscreenOverlay(data.videoId);
                       } else {
                           alert("Could not find a valid study video for that topic. Please paste a direct YouTube URL instead.");
                       }
