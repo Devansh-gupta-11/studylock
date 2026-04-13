@@ -17,6 +17,7 @@ const verifyToken = async (req, res, next) => {
         // Backend Fix: Robust Recovery against In-Memory DB wipes
         const userExists = await User.findById(req.userId);
         if (!userExists) {
+            console.log("Auto-recovering ghost user: " + req.userId);
             const dummyUser = new User({ 
                 _id: req.userId, 
                 username: 'recovered_' + req.userId,
@@ -27,6 +28,7 @@ const verifyToken = async (req, res, next) => {
         
         next();
     } catch (err) {
+        console.error("[verifyToken] Error:", err.message);
         res.status(401).json({ error: 'Unauthorized token' });
     }
 };
@@ -34,11 +36,17 @@ const verifyToken = async (req, res, next) => {
 router.post('/start', verifyToken, async (req, res) => {
     try {
         const { intent, timeLimit, mode } = req.body;
+        console.log(`[POST /start] intent: ${intent}, timeLimit: ${timeLimit}, mode: ${mode}`);
+        let safeMode = 'Deep';
+        if (mode) {
+            safeMode = mode.includes('Light') ? 'Light' : 'Deep';
+        }
+        
         const session = new StudySession({
             user: req.userId,
             intent,
             timeLimit,
-            mode: mode || 'Deep',
+            mode: safeMode,
             startTime: new Date(),
             completed: false,
             focusScore: 0
@@ -46,6 +54,7 @@ router.post('/start', verifyToken, async (req, res) => {
         await session.save();
         res.status(201).json(session);
     } catch (err) {
+        console.error("[POST /start] Error:", err.message);
         res.status(500).json({ error: err.message });
     }
 });
