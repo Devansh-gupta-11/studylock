@@ -17,6 +17,11 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/sessions', sessionRoutes);
 
+// Health check endpoint just to test cloud deployment!
+app.get('/api/ping', (req, res) => {
+    res.json({ message: 'StudyLock is ALIVE in the cloud! 🚀', timestamp: new Date() });
+});
+
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
