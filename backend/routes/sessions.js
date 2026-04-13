@@ -4,13 +4,28 @@ const jwt = require('jsonwebtoken');
 
 const StudySession = require('../models/StudySession');
 
-const verifyToken = (req, res, next) => {
+const User = require('../models/User');
+
+const verifyToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     if (!authHeader) return res.status(403).json({ error: 'No token provided' });
     try {
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
         req.userId = decoded.userId;
+        
+        // Backend Fix: Robust Recovery against In-Memory DB wipes
+        const userExists = await User.findById(req.userId);
+        if (!userExists) {
+            const dummyUser = new User({ 
+                _id: req.userId, 
+                name: 'Session Recovered', 
+                email: req.userId + '@recovered.com', 
+                password: 'recovered' 
+            });
+            await dummyUser.save();
+        }
+        
         next();
     } catch (err) {
         res.status(401).json({ error: 'Unauthorized token' });

@@ -11,6 +11,7 @@
   <body>
     <div id="root"></div>
     <script>
+      const boundInputs = new WeakSet();
       window.addEventListener('load', () => {
         let youtubeFeatureAdded = false;
         
@@ -36,10 +37,8 @@
           const iframe = document.createElement('iframe');
           let embedUrl = '';
           if (videoId.startsWith('?')) {
-              // Search playlist mode
               embedUrl = 'https://www.youtube-nocookie.com/embed' + videoId + '&autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
           } else {
-              // Direct video ID mode
               embedUrl = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
           }
           iframe.src = embedUrl;
@@ -110,13 +109,11 @@
             document.body.appendChild(ytBtn);
           }
           
-          // Only show button if search is actually on screen (we are inside the portal dashboard)
           if (searchInput) {
             ytBtn.style.display = 'block';
             
-            // Allow user to just hit Enter in the input bar
-            if (!searchInput.dataset.ytBound) {
-                searchInput.dataset.ytBound = "true";
+            if (!boundInputs.has(searchInput)) {
+                boundInputs.add(searchInput);
                 searchInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
