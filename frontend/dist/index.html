@@ -11,81 +11,105 @@
   <body>
     <div id="root"></div>
     <script>
-      function createFullscreenOverlay(videoId) {
-        // Create immersive full-screen overlay inside the app
-        const overlay = document.createElement('div');
-        overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 2147483647; display: flex; flex-direction: column;';
+      window.addEventListener('load', () => {
+        let youtubeFeatureAdded = false;
         
-        // Add a Close button
-        const closeBtn = document.createElement('button');
-        closeBtn.innerHTML = '✕ Close Video';
-        closeBtn.style.cssText = 'position: absolute; top: 20px; right: 20px; background: rgba(229, 45, 39, 0.9); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-family: inherit; cursor: pointer; z-index: 2147483648; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.5); backdrop-filter: blur(5px);';
-        closeBtn.onmouseenter = () => closeBtn.style.background = 'rgba(255, 60, 50, 1)';
-        closeBtn.onmouseleave = () => closeBtn.style.background = 'rgba(229, 45, 39, 0.9)';
-        closeBtn.onclick = () => {
-          if (document.fullscreenElement) {
-            document.exitFullscreen().catch(err => console.log(err));
-          }
-          if (document.body.contains(overlay)) {
-            document.body.removeChild(overlay);
-          }
-        };
-        
-        // Embed the exact YouTube video in full screen
-        const iframe = document.createElement('iframe');
-        iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&fs=1';
-        iframe.style.cssText = 'width: 100%; height: 100%; border: none; flex-grow: 1;';
-        iframe.setAttribute('allowfullscreen', 'true');
-        iframe.setAttribute('allow', 'autoplay; fullscreen');
-        
-        overlay.appendChild(iframe);
-        overlay.appendChild(closeBtn);
-        document.body.appendChild(overlay);
-        
-        // Force Native Browser Fullscreen
-        try {
-          if (overlay.requestFullscreen) {
-            overlay.requestFullscreen();
-          } else if (overlay.webkitRequestFullscreen) {
-            overlay.webkitRequestFullscreen();
-          } else if (overlay.msRequestFullscreen) {
-            overlay.msRequestFullscreen();
-          }
-        } catch (err) {
-          console.error('Fullscreen failed', err);
+        function exactVideoId(url) {
+          if (!url) return null;
+          const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+          return ytMatch ? ytMatch[1] : null;
         }
-      }
 
-      function exactVideoId(url) {
-        if (!url) return null;
-        const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
-        return ytMatch ? ytMatch[1] : null;
-      }
-
-      // 1. Intercept programmatic window.open
-      const originalOpen = window.open;
-      window.open = function(url, ...args) {
-        const vidId = exactVideoId(url);
-        if (vidId) {
-            createFullscreenOverlay(vidId);
-            return null; // Stop the blank tab from opening
-        }
-        return originalOpen.call(window, url, ...args);
-      };
-
-      // 2. Intercept global clicks (capture phase) for <a> tags or anything trying to navigate
-      document.addEventListener('click', (e) => {
-        // Find if they clicked an anchor tag
-        const a = e.target.closest('a');
-        if (a && a.href) {
-          const vidId = exactVideoId(a.href);
-          if (vidId) {
-            e.preventDefault();
-            e.stopPropagation();
-            createFullscreenOverlay(vidId);
+        function createFullscreenOverlay(videoId) {
+          const overlay = document.createElement('div');
+          overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 2147483647; display: flex; flex-direction: column; justify-content: center; align-items: center;';
+          
+          const closeBtn = document.createElement('button');
+          closeBtn.innerHTML = '✕ End Study Session';
+          closeBtn.style.cssText = 'position: absolute; top: 20px; right: 20px; background: rgba(229, 45, 39, 0.9); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; z-index: 2147483648; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.5);';
+          
+          closeBtn.onclick = () => {
+            if (document.fullscreenElement) document.exitFullscreen().catch(err => console.log(err));
+            if (document.body.contains(overlay)) document.body.removeChild(overlay);
+          };
+          
+          const iframe = document.createElement('iframe');
+          iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
+          iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
+          iframe.setAttribute('allowfullscreen', 'true');
+          iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+          
+          overlay.appendChild(iframe);
+          overlay.appendChild(closeBtn);
+          document.body.appendChild(overlay);
+          
+          try {
+            if (overlay.requestFullscreen) overlay.requestFullscreen();
+            else if (overlay.webkitRequestFullscreen) overlay.webkitRequestFullscreen();
+            else if (overlay.msRequestFullscreen) overlay.msRequestFullscreen();
+          } catch (err) {
+            console.error('Fullscreen failed', err);
           }
         }
-      }, true);
+
+        const observer = new MutationObserver(() => {
+          const searchInput = document.querySelector('input[placeholder*="Search"]');
+          
+          if (!youtubeFeatureAdded && searchInput) {
+            const container = searchInput.parentElement.parentElement;
+            
+            if (container && !document.getElementById('yt-inject-container')) {
+              const ytContainer = document.createElement('div');
+              ytContainer.id = 'yt-inject-container';
+              ytContainer.style.cssText = 'margin-top: 20px; text-align: center; width: 100%;';
+              
+              const ytBtn = document.createElement('button');
+              ytBtn.innerHTML = '▶ Watch Video in Deep Focus';
+              ytBtn.style.cssText = 'background: #7367F0; color: white; border: none; padding: 14px 28px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s all; display: block; margin: 0 auto; box-shadow: 0 4px 15px rgba(115, 103, 240, 0.4); border: 1px solid rgba(255,255,255,0.1);';
+              
+              ytBtn.onmouseenter = () => ytBtn.style.transform = 'translateY(-2px)';
+              ytBtn.onmouseleave = () => ytBtn.style.transform = 'translateY(0)';
+              
+              ytBtn.onclick = (e) => {
+                e.preventDefault();
+                const query = searchInput.value.trim();
+                const vidId = exactVideoId(query);
+                
+                if (vidId) {
+                  createFullscreenOverlay(vidId);
+                } else {
+                  alert("🔐 Deep Focus Mode Active:\n\nTo prevent getting distracted by browsing search results, you must paste a specific YouTube Video URL directy into the search bar!\n\nExample: https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+                }
+              };
+              
+              ytContainer.appendChild(ytBtn);
+              searchInput.parentElement.after(ytContainer);
+              youtubeFeatureAdded = true;
+            }
+          }
+          
+          if (!searchInput) {
+            youtubeFeatureAdded = false;
+          }
+        });
+        
+        observer.observe(document.body, { childList: true, subtree: true });
+        
+        // Also intercept clicks on the mock cards
+        document.addEventListener('click', (e) => {
+          // If they click any text containing "REACT" or dummy video cards
+          const isCard = e.target.closest('div[style*="background"], div[class*="card"]');
+          const isYtContainer = e.target.closest('#yt-inject-container');
+          const isSearch = e.target.closest('input');
+          const isHeader = e.target.closest('header, nav, button');
+          
+          if (isCard && !isYtContainer && !isSearch && !isHeader) {
+             e.preventDefault();
+             e.stopPropagation();
+             alert("🔐 These feature cards are disabled in strict focus mode.\nPlease paste your specific YouTube link into the search bar to study.");
+          }
+        }, true);
+      });
     </script>
   </body>
 </html>
