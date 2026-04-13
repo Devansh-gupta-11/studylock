@@ -22,6 +22,28 @@ app.get('/api/ping', (req, res) => {
     res.json({ message: 'StudyLock is ALIVE in the cloud! 🚀', timestamp: new Date() });
 });
 
+const https = require('https');
+
+app.get('/api/search-video', (req, res) => {
+    const query = req.query.q;
+    if (!query) return res.status(400).json({ error: 'Query required' });
+    
+    https.get(`https://html.duckduckgo.com/html/?q=site:youtube.com+${encodeURIComponent(query)}`, (ddgRes) => {
+        let data = '';
+        ddgRes.on('data', chunk => data += chunk);
+        ddgRes.on('end', () => {
+            const match = data.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/i);
+            if (match && match[1]) {
+                res.json({ videoId: match[1] });
+            } else {
+                res.status(404).json({ error: 'No video found' });
+            }
+        });
+    }).on('error', (err) => {
+        res.status(500).json({ error: err.message });
+    });
+});
+
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 

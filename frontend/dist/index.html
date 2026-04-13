@@ -87,11 +87,26 @@
                 
                 if (vidId) {
                   // Direct Video explicitly passed
-                  createFullscreenOverlay(vidId);
+                  const srcUrl = 'https://www.youtube-nocookie.com/embed/' + vidId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
+                  createFullscreenOverlay(srcUrl);
                 } else {
-                  // Topic Search
-                  const searchSrc = '?listType=search&list=' + encodeURIComponent(query);
-                  createFullscreenOverlay(searchSrc);
+                  // Topic Search using safe backend proxy
+                  ytBtn.innerHTML = '▶ Searching Topic...';
+                  fetch('/api/search-video?q=' + encodeURIComponent(query))
+                    .then(res => res.json())
+                    .then(data => {
+                        ytBtn.innerHTML = '▶ Watch Video in Deep Focus';
+                        if (data.videoId) {
+                            const srcUrl = 'https://www.youtube-nocookie.com/embed/' + data.videoId + '?autoplay=1&fs=1&color=white&disablekb=1&modestbranding=1';
+                            createFullscreenOverlay(srcUrl);
+                        } else {
+                            alert("Could not find a valid study video for that topic. Please paste a direct YouTube URL instead.");
+                        }
+                    })
+                    .catch(err => {
+                        ytBtn.innerHTML = '▶ Watch Video in Deep Focus';
+                        alert("Topic search proxy failed. Please use a direct YouTube URL.");
+                    });
                 }
               };
               
