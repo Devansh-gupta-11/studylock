@@ -11,7 +11,7 @@ const verifyToken = async (req, res, next) => {
     if (!authHeader) return res.status(403).json({ error: 'No token provided' });
     try {
         const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret', { ignoreExpiration: true });
         req.userId = decoded.userId;
         
         // Backend Fix: Robust Recovery against In-Memory DB wipes

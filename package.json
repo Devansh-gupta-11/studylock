@@ -1,9 +1,0 @@
-{
-  "name": "studylock",
-  "version": "1.0.0",
-  "description": "StudyLock Production Setup",
-  "scripts": {
-    "install": "cd backend && npm install",
-    "start": "node backend/server.js"
-  }
-}
